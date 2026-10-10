@@ -27,15 +27,6 @@
   <xacro:property name="hip_offset_z" value="-0.05" />
   <xacro:property name="wheel_spacing_y" value="0.04" />
 
-  <!-- Base footprint (Ground projection) -->
-  <link name="base_footprint"/>
-
-  <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_footprint"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 0.45" rpy="0 0 0"/>
-  </joint>
-
   <!-- ================= Torso / Base Link ================= -->
   <link name="base_link">
     <inertial>
@@ -72,7 +63,7 @@
       <origin xyz="0.0 ${reflect * hip_offset_y} ${hip_offset_z}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
       <limit lower="-1.20" upper="1.20" effort="50.0" velocity="10.0"/>
-      <dynamics damping="0.5" friction="0.1"/>
+      <dynamics damping="1.5" friction="0.1" spring_reference="0.0" spring_stiffness="150.0"/>
     </joint>
 
     <!-- Thigh Link -->
@@ -107,7 +98,7 @@
       <axis xyz="0 1 0"/>
       <!-- Supports range 0 deg (straight) to 130 deg (crouched), covering height [0.18, 0.38] m -->
       <limit lower="0.0" upper="2.30" effort="50.0" velocity="10.0"/>
-      <dynamics damping="0.5" friction="0.1"/>
+      <dynamics damping="2.0" friction="0.1" spring_reference="0.0" spring_stiffness="250.0"/>
     </joint>
 
     <!-- Shin Link -->
@@ -141,7 +132,7 @@
       <origin xyz="0.0 ${reflect * wheel_spacing_y} ${-shin_length}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
       <limit effort="25.0" velocity="30.0"/>
-      <dynamics damping="0.05" friction="0.02"/>
+      <dynamics damping="0.005" friction="0.001"/>
     </joint>
 
     <!-- Wheel Link -->

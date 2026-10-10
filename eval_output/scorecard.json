@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-10-09T22:40:49Z",
+  "status": "PASSED",
+  "metrics": {
+    "steady_pitch_deg": 0.12645400130099566,
+    "steady_pitch_pass": true,
+    "j_v": 0.4550307856725855,
+    "j_v_pass": true,
+    "j_theta": 0.08192187446536006,
+    "j_theta_pass": true,
+    "settling_time": 0.9620000000000007,
+    "settling_time_pass": true,
+    "min_clearance": 0.15665434458493532,
+    "clearance_pass": true,
+    "recovery_time": 0.0,
+    "recovery_pass": true,
+    "all_passed": true
+  },
+  "thresholds": {
+    "steady_pitch_deg": "< 5.0 deg",
+    "j_v": "<= 1.5 m/s*s",
+    "j_theta": "<= 0.15 rad*s",
+    "settling_time": "< 2.0 s",
+    "min_clearance": "> 0.0 m",
+    "recovery_time": "<= 2.5 s"
+  }
+}

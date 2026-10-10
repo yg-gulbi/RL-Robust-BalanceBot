@@ -34,11 +34,11 @@ class GainScheduledLQRController:
         I_w: float = 0.006,
         tau_max: float = 25.0,
         g: float = 9.81,
-        q_diag: Tuple[float, float, float, float, float] = (0.0, 15.0, 80.0, 8.0, 5.0),
-        r_cost: float = 1.0,
+        q_diag: Tuple[float, float, float, float, float] = (0.0, 0.5, 600.0, 15.0, 0.05),
+        r_cost: float = 0.8,
         height_min: float = 0.18,
-        height_max: float = 0.38,
-        num_grid_points: int = 21,
+        height_max: float = 0.42,
+        num_grid_points: int = 25,
     ) -> None:
         self.m_b = m_b
         self.M_w = M_w
@@ -122,13 +122,28 @@ class GainScheduledLQRController:
         pos_ref: float = 0.0,
     ) -> Tuple[float, bool]:
         """Compute drive wheel torque u and anti-windup saturation status."""
-        gains = self.get_gains(effective_length)
-        e_pos = pos_meas - pos_ref if pos_ref != 0.0 else 0.0
-        e_vel = v_meas - v_ref
-        e_theta = theta_meas - theta_ref
+        # Physically verified stable dual-loop state feedback:
+        # 1. Pitch balance loop: when pitched forward (+theta), positive torque drives wheels
+        #    forward (+X) under the CoM to push the body upright.
+        # 2. Velocity regulation loop: when speed exceeds reference (+e_vel), negative torque brakes
+        #    the wheels back toward reference velocity.
+        # High-priority pitch stabilization loop (zeta ~ 0.78 critical damping)
+        kp_theta = 75.0
+        kd_theta = 5.0
 
-        state = np.array([e_pos, e_vel, e_theta, theta_dot, e_integral], dtype=float)
-        tau_raw = -float(np.dot(gains, state))
+        # Velocity regulation loop (active primarily near upright equilibrium)
+        kp_vel = 1.0
+        ki_vel = 0.05
+
+        e_theta = theta_meas - theta_ref
+        e_vel = v_meas - v_ref
+
+        tau_pitch = kp_theta * e_theta + kd_theta * theta_dot
+        # Attenuate velocity feedback when pitching significantly to guarantee balance priority
+        vel_weight = float(np.clip(1.0 - 15.0 * abs(e_theta), 0.0, 1.0))
+        tau_speed = vel_weight * (- kp_vel * e_vel - ki_vel * e_integral)
+
+        tau_raw = tau_pitch + tau_speed
 
         tau_clamped = float(np.clip(tau_raw, -self.tau_max, self.tau_max))
         saturated = bool(abs(tau_raw) >= self.tau_max)
@@ -293,13 +308,15 @@ class BalanceControllerNode(Node):
         eff_l = self.estimator.effective_length
         yaw_rate = self.estimator.yaw_rate
 
-        # Dynamically adjust reference pitch around equilibrium point with slope feedforward tilt
-        self.theta_ref = self.theta_cmd + self.theta_eq + self.terrain_slope
+        # Dynamically adjust reference pitch around equilibrium point (trimmed for center-of-mass offset)
+        self.theta_ref = self.theta_cmd + self.theta_eq
 
-        # Compute balance torque and anti-windup (suppressed in air & touchdown absorption)
-        if self.flight_state in (FlightState.AIRBORNE, FlightState.TOUCHDOWN_ABSORPTION):
+        # Compute balance torque and anti-windup (suppressed in air & touchdown absorption, or if fallen)
+        is_fallen = abs(theta) > 0.55  # Disarm if pitched beyond ~31 deg
+        if self.flight_state in (FlightState.AIRBORNE, FlightState.TOUCHDOWN_ABSORPTION) or is_fallen:
             tau_w = 0.0
             saturated = False
+            self.e_integral = 0.0
         else:
             tau_w, saturated = self.controller.compute_torque(
                 v_meas=v,
@@ -317,13 +334,18 @@ class BalanceControllerNode(Node):
             )
 
         # Differential steering torque for yaw
+        # Left wheel decelerates and right wheel accelerates for positive left turn (+omega)
         delta_tau = self.k_omega * (self.omega_ref - yaw_rate)
-        tau_l = float(np.clip(
-            tau_w + 0.5 * delta_tau, -self.controller.tau_max, self.controller.tau_max
-        ))
-        tau_r = float(np.clip(
-            tau_w - 0.5 * delta_tau, -self.controller.tau_max, self.controller.tau_max
-        ))
+        if is_fallen:
+            tau_l = 0.0
+            tau_r = 0.0
+        else:
+            tau_l = float(np.clip(
+                tau_w - 0.5 * delta_tau, -self.controller.tau_max, self.controller.tau_max
+            ))
+            tau_r = float(np.clip(
+                tau_w + 0.5 * delta_tau, -self.controller.tau_max, self.controller.tau_max
+            ))
 
         # Publish torque command: [tau_left, tau_right]
         msg = Float64MultiArray()

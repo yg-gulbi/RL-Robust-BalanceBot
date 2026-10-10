@@ -88,8 +88,8 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'spawn_z',
-            default_value='0.0',
-            description='Initial robot Z position'
+            default_value='0.505',
+            description='Initial robot Z position (base_link height)'
         ),
         # Start Gazebo Sim
         gz_sim,
@@ -110,7 +110,7 @@ def generate_launch_description():
             name='ros_gz_bridge',
             output='screen',
             arguments=[
-                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+                '/world/skatepark/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
                 '/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU',
                 '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
                 '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
@@ -127,6 +127,7 @@ def generate_launch_description():
                 '/model/balancebot/joint/right_knee_joint/cmd_force@std_msgs/msg/Float64]gz.msgs.Double',
             ],
             remappings=[
+                ('/world/skatepark/clock', '/clock'),
                 ('/camera/image', '/camera/image_raw'),
                 ('/camera/depth_image', '/camera/depth/image_raw'),
             ],
