@@ -1,73 +1,78 @@
 # RL-Robust-BalanceBot
 
-> **Two-Wheeled Active-Leg Self-Balancing Robot in ROS 2 & Gazebo/MuJoCo Simulation**  
-> *Extreme Terrain Traversal, Dynamic Equilibrium LQR Control, Jump Landing Shock Absorption, and Real-Time 3D Teleoperation*
+> **ROS 2 및 MuJoCo/Gazebo 기반 2륜 가변 링크 자립 밸런싱 로봇 시뮬레이션**  
+> *스케이트파크 험지 주파, 이득 스케줄링 LQR 동적 평형 제어, 점프 착지 충격 흡수, 실시간 3D 원격 조종 지원*
 
 [![ROS 2](https://img.shields.io/badge/ROS%202-Jazzy%20Jalisco-blue.svg)](https://docs.ros.org/en/jazzy/)
-[![Physics](https://img.shields.io/badge/Physics-Gazebo%20Harmonic%20%7C%20MuJoCo%203.14-orange.svg)](https://mujoco.org/)
+[![Physics Engine](https://img.shields.io/badge/Physics-MuJoCo%203.14%20%7C%20Gazebo%20Harmonic-orange.svg)](https://mujoco.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-407%20Passed-brightgreen.svg)]()
 
 ---
 
-## 📌 Project Overview
+## 📌 프로젝트 소개 (Project Overview)
 
-**RL-Robust-BalanceBot** is an advanced robotic simulation system featuring a 6-DOF two-wheeled active-leg self-balancing robot designed to navigate extreme skatepark environments. It combines high-speed multi-body dynamics, analytic continuous-time **Gain-Scheduled LQR-I balance control**, **Virtual Model Control (VMC)** for articulated legs, and a **5-state flight finite-state machine (FSM)** for ramp jump and landing shock absorption.
+**RL-Robust-BalanceBot**은 극단적인 스케이트파크 환경(평지, 연속 둔덕, 거친 요철, 12° 경사로, 점프대)을 안정적으로 주파할 수 있도록 설계된 **6자유도(DOF) 액티브 레그(Active-Leg) 기반 2륜 자립 밸런싱 로봇** 시뮬레이션 시스템입니다.
 
-![Evaluation Dashboard](docs/evaluation_dashboard.png)
+다물체 동역학 기반의 해석적 연속시간 **이득 스케줄링 LQR-I 제어기**, 2자유도 시상면 가상 모델 제어(**VMC, Virtual Model Control**), 공중 자유낙하 및 착지 충격 분산을 위한 **5단계 비행 유한 상태 머신(FSM)**을 유기적으로 결합하여 강력한 외란 극복 및 자세 안정성을 달성했습니다.
 
-### Key Features
-- **6-DOF Hybrid Kinematic/Dynamic Model**: 2 continuous drive wheels + 4 revolute pitch leg joints (Hip/Knee).
-- **Gain-Scheduled LQR-I Inverted Pendulum Control**: Solves Algebraic Riccati Equations (ARE) parameterised by effective leg length $L \in [0.18, 0.38]\,\text{m}$ at 100 Hz.
-- **Active 2-DOF Sagittal Leg Kinematics (VMC)**: Independent height and fore/aft wheel offset adjustment with dynamic equilibrium pitch trimming ($\theta_{eq} = \arcsin(\Delta x / L_{eff})$).
-- **5-State Flight & Shock Dissipation FSM**: Free-fall detection ($||\mathbf{a}|| < 2.5\,\text{m/s}^2$), torque suppression in mid-air, and impact shock absorption ($||\mathbf{a}|| > 15\,\text{m/s}^2$).
-- **Multi-Sensor Simulation**: 200 Hz 6-axis IMU, 20 Hz 360° LiDAR, and 30 Hz RGB-D Depth Camera.
-- **Dual Physics Engine Support**:
-  - **ROS 2 Jazzy + Gazebo Sim (Harmonic)** via `ros_gz_bridge`.
-  - **Real-Time Interactive MuJoCo (3.14)** 3D Viewer with smooth teleoperation and floating controller GUI.
+![평가 대시보드](docs/evaluation_dashboard.png)
 
----
-
-## 🏗 System Architecture
-
-```
-       [ LiDAR (20 Hz) ]      [ RGB-D Depth Camera (30 Hz) ]
-                 \                  /
-            +----------------------------+
-            |      Torso Base (12 kg)    |
-            |     IMU Sensor (200 Hz)    |
-            +--------------+-------------+
-                  /                 \
-        [ Left Hip Joint ]    [ Right Hip Joint ]  (Revolute Pitch, +/-1.2 rad, tau_max = 50 N*m)
-                 |                   |
-          Thigh Link (0.2m)    Thigh Link (0.2m)
-                 |                   |
-        [ Left Knee Joint ]   [ Right Knee Joint ] (Revolute Pitch, 0 to 2.3 rad, tau_max = 50 N*m)
-                 |                   |
-          Shank Link (0.2m)   Shank Link (0.2m)
-                 |                   |
-        [ Left Wheel Hub ]    [ Right Wheel Hub ] (Continuous Pitch, tau_max = 25 N*m)
-            (Radius = 0.1m, Track Width = 0.45m)
-```
-
-For complete mathematical derivations and interface specifications, see [ARCHITECTURE.md](ARCHITECTURE.md).
+### 핵심 기능
+- **6-DOF 하이브리드 기구학/동역학 모델**: 2개 연속 구동 휠 + 4개 피치 회전 관절(골반/무릎).
+- **이득 스케줄링 LQR-I 균형 제어**: 다리 길이 변화($L \in [0.18, 0.38]\,\text{m}$)에 맞춰 연속 리카티 방정식(ARE)을 기반으로 최적 피드백 게인을 100 Hz로 실시간 스케줄링.
+- **2-DOF 시상면 다리 가상 모델 제어 (VMC)**: 차체 높이 및 앞/뒤 바퀴 오프셋을 자유롭게 조절하고, 오프셋에 따른 동적 평형각($\theta_{eq} = \arcsin(\Delta x / L_{eff})$)을 자동 보정.
+- **5단계 비행 및 충격 흡수 FSM**: 자유낙하 감지($||\mathbf{a}|| < 2.5\,\text{m/s}^2$), 공중 휠 회전 폭주 방지(토크 차단), 착지 충격 감지($||\mathbf{a}|| > 15\,\text{m/s}^2$) 및 댐핑 컴플라이언스 전환.
+- **복합 센서 시뮬레이션**: 200 Hz 6축 IMU, 20 Hz 360° 2D LiDAR, 30 Hz RGB-D 뎁스 카메라.
+- **이중 물리 엔진 환경 지원**:
+  - **MuJoCo (3.14)**: 지연 없는 실시간 3D 뷰어와 키보드/플로팅 무선 조종기 UI를 갖춘 고속 인터랙티브 환경.
+  - **ROS 2 Jazzy + Gazebo Sim (Harmonic)**: `ros_gz_bridge`를 통한 정규 ROS 2 노드/토픽 생태계 연동.
 
 ---
 
-## 🚀 Quick Start & Installation
+## 🏗 시스템 아키텍처 (System Architecture)
 
-### Prerequisites
-- **Ubuntu 24.04 LTS (Noble)**
-- **ROS 2 Jazzy Jalisco**
-- **Python 3.12+**
-- **MuJoCo 3.14+** (`pip install mujoco glfw`)
+```
+       [ 2D 라이다 (20 Hz) ]      [ RGB-D 뎁스 카메라 (30 Hz) ]
+                  \                      /
+             +--------------------------------+
+             |       상체 베이스 (12 kg)       |
+             |       IMU 센서 (200 Hz)        |
+             +---------------+----------------+
+                    /                 \
+         [ 좌측 힙 관절 ]            [ 우측 힙 관절 ]   (Pitch 회전, ±1.2 rad, 최대 50 N·m)
+                 |                         |
+           허벅지 링크 (0.2m)        허벅지 링크 (0.2m)
+                 |                         |
+         [ 좌측 무릎 관절 ]          [ 우측 무릎 관절 ]  (Pitch 회전, 0~2.3 rad, 최대 50 N·m)
+                 |                         |
+            종아리 링크 (0.2m)        종아리 링크 (0.2m)
+                 |                         |
+         [ 좌측 구동 바퀴 ]          [ 우측 구동 바퀴 ]  (연속 회전, 반경 0.1m, 최대 25 N·m)
+            (윤간 거리 Track Width = 0.45m)
+```
+
+상세한 수식 유도 및 제어기 설계 명세는 [ARCHITECTURE.md](ARCHITECTURE.md)를 참고하세요.
+
+---
+
+## 🚀 시작하기 & 설치 방법 (Quick Start)
+
+### 권장 환경
+- **OS**: Ubuntu 24.04 LTS (Noble Numbat)
+- **ROS 버전**: ROS 2 Jazzy Jalisco
+- **Python**: 3.12 이상
+- **물리 엔진 라이브러리**: MuJoCo 3.14+ (`pip install mujoco glfw`)
 
 ```bash
-# Clone the repository
+# 1. 저장소 클론
 git clone https://github.com/yg-gulbi/RL-Robust-BalanceBot.git
 cd RL-Robust-BalanceBot
 
-# Install dependencies & build ROS 2 workspace
+# 2. 필수 의존성 설치
+pip install mujoco glfw numpy scipy matplotlib
+
+# 3. ROS 2 워크스페이스 빌드 (ROS 2 패키지 사용 시)
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install
 source install/setup.bash
@@ -75,41 +80,41 @@ source install/setup.bash
 
 ---
 
-## 🎮 Running Interactive Simulation
+## 🎮 시뮬레이터 실행 및 조종 방법 (Simulation & Teleop)
 
-### Option 1: Interactive MuJoCo 3D Simulator (Recommended)
+### 1. MuJoCo 실시간 3D 시뮬레이터 (추천 환경)
 
-Runs high-speed real-time 3D physics with interactive keyboard driving and a floating remote controller GUI:
+별도의 복잡한 브릿지 설정 없이, 한 줄의 명령어로 즉시 실시간 3D 뷰어 창과 미니 무선 조종기 UI가 실행됩니다:
 
 ```bash
 python3 run_mujoco_sim.py
 ```
 
-#### Controls
-| Key | Action | Details |
+#### 키보드 조작 가이드 (3D 뷰어 화면 또는 조종기 창에서 직접 입력)
+| 키 | 조작 동작 | 기능 설명 |
 | :---: | :--- | :--- |
-| **`↑` / `W` / `I`** | **Drive Forward** | Smoothly accelerates forward; holds speed continuously while driving |
-| **`↓` / `S` / `,`** | **Drive Backward** | Smoothly accelerates backward |
-| **`←` / `A` / `J`** | **Steer Left** | Natural differential turning |
-| **`→` / `D` / `L`** | **Steer Right** | Natural differential turning |
-| **`Space` / `K`** | **Emergency Brake** | Immediate brake and position locking (Station-Keeping) |
-| **`P`** | **40 N Push Impulse** | Tests external disturbance rejection (Watch the robot recover balance!) |
-| **`R`** | **Reset** | Resets robot pose to nominal standing stance |
-| **`M`** | **Toggle Mode** | Switches between Auto-Stop on Release and Cruise Control |
+| **`↑` / `W`** | **전진 가속** | 키를 누르고 있는 동안 지속해서 매끄럽게 전진 주행 |
+| **`↓` / `S`** | **후진 가속** | 뒤로 후진 주행 |
+| **`←` / `A`** | **좌회전** | 차동 구동(Differential Drive)을 통한 부드러운 좌선회 |
+| **`→` / `D`** | **우회전** | 차동 구동을 통한 부드러운 우선회 |
+| **`Space`** | **긴급 제동 / 정지** | 즉시 제동 후 그 자리에 멈춰 서서 균형 유지(Station-Keeping) |
+| **`P`** | **40 N 외란 밀치기** | 로봇에 40 N의 충격을 가해 자세 복원력(Push Recovery) 검증 |
+| **`R`** | **자세 초기화** | 시작 직립 스탠스로 즉시 리셋 |
+| **`M`** | **조종 모드 전환** | 자동 정지 모드(손 떼면 감속 정지) ↔ 크루즈 모드(속도 유지) 전환 |
 
 ---
 
-### Option 2: ROS 2 + Gazebo Sim (Harmonic)
+### 2. ROS 2 + Gazebo Sim (Harmonic)
 
-Runs the full ROS 2 ecosystem connected via `ros_gz_bridge`:
+정규 ROS 2 토픽/노드 파이프라인으로 시뮬레이터를 가동하려면:
 
 ```bash
-# Terminal 1: Launch Gazebo Sim with skatepark world & controllers
+# [터미널 1] 가제보 스케이트파크 월드 및 제어 노드 실행
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ros2 launch balancebot_description gazebo.launch.py
 
-# Terminal 2: Run ROS 2 keyboard teleoperation node
+# [터미널 2] ROS 2 키보드 원격 조종 노드 실행
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ros2 run balancebot_controller teleop_node
@@ -117,43 +122,45 @@ ros2 run balancebot_controller teleop_node
 
 ---
 
-## 📊 Verification & Benchmarks
+## 📊 성능 평가 지표 및 벤치마크 (Benchmarks)
 
-The controller has undergone automated verification across 407 authentic test cases (including boundary corners and adversarial external disturbances):
+총 407개의 테스트 케이스(물리 한계 시험, 임펄스 외란, 센서 노이즈)를 통과하며 성능을 검증받았습니다:
 
-| Metric | Target Requirement | Measured Result | Status |
+| 평가 항목 | 목표 성능 기준 | 실제 측정값 | 통과 여부 |
 | :--- | :---: | :---: | :---: |
-| **Steady-State Pitch Error** ($|\theta|$) | $< 5.0^\circ$ | **$1.84^\circ$** | ✅ PASSED |
-| **Velocity Tracking Error** ($J_v$) | $< 0.15\,\text{m/s}$ | **$0.062\,\text{m/s}$** | ✅ PASSED |
-| **40 N Push Impulse Settling Time** | $< 1.5\,\text{s}$ | **$0.82\,\text{s}$** | ✅ PASSED |
-| **Chassis Ground Clearance** | $> 0.05\,\text{m}$ | **$0.091\,\text{m}$** | ✅ PASSED |
-| **Ramp Jump Landing Recovery** | No Toppling ($|\theta| < 25^\circ$) | **$4.63^\circ$ max tilt** | ✅ PASSED |
+| **평지 정상상태 피치각 오차** ($|\theta|$) | $< 5.0^\circ$ | **$1.84^\circ$** | ✅ 합격 |
+| **속도 추종 오차** ($J_v$) | $< 0.15\,\text{m/s}$ | **$0.062\,\text{m/s}$** | ✅ 합격 |
+| **40 N 강한 외란 충격 복원 시간** | $< 1.5\,\text{초}$ | **$0.82\,\text{초}$** | ✅ 합격 |
+| **차체 최저 지상고 (Ground Clearance)** | $> 0.05\,\text{m}$ | **$0.091\,\text{m}$** | ✅ 합격 |
+| **점프대 착지 충격 균형 복원** | 전복 없음 ($|\theta| < 25^\circ$) | **최대 $4.63^\circ$ 피치** | ✅ 합격 |
 
-Run the verification test suite:
+자동화 검증 스위트 실행:
 ```bash
 pytest src/balancebot_evaluator/test/
 ```
 
 ---
 
-## 📂 Repository Structure
+## 📂 디렉토리 구조 (Directory Structure)
 
 ```
 .
-├── run_mujoco_sim.py             # Interactive 3D MuJoCo simulator & teleop runner
-├── ARCHITECTURE.md               # Detailed system architecture & math formulation
-├── docs/                         # Demonstration MP4 video, scorecards & plots
-│   ├── balancebot_demo.mp4
-│   ├── evaluation_dashboard.png
-│   └── scorecard.csv
+├── run_mujoco_sim.py             # 실시간 3D MuJoCo 시뮬레이터 및 조종기 UI 러너
+├── README.md                     # 프로젝트 전체 안내서 (현재 문서)
+├── ARCHITECTURE.md               # 시스템 아키텍처 및 수학적 동역학 모델 명세서
+├── TEST_READY.md                 # 테스트 실행 및 검증 가이드
+├── docs/                         # 시연 동영상, 대시보드 그래프 및 평가 점수표
+│   ├── balancebot_demo.mp4       # 실제 주행 및 장애물 극복 30 FPS 데모 영상
+│   ├── evaluation_dashboard.png  # 속도/피치 추종 및 위상 공간 그래프
+│   └── scorecard.csv             # 정량 평가 결과 CSV
 └── src/
-    ├── balancebot_description/    # URDF/Xacro, MJCF skatepark worlds & sensor plugins
-    ├── balancebot_controller/     # LQR balance node, VMC leg kinematics, FSM observer
-    └── balancebot_evaluator/      # Automated evaluation harness & test suites (407 tests)
+    ├── balancebot_description/    # URDF/Xacro, MJCF 스케이트파크 월드 및 센서 플러그인
+    ├── balancebot_controller/     # LQR 밸런싱, VMC 다리 기구학, FSM 상태 관측기 노드
+    └── balancebot_evaluator/      # 자동 평가 테스트 하네스 및 스코어카드 산출기
 ```
 
 ---
 
-## 📜 License
+## 📜 라이선스 (License)
 
-Licensed under the [Apache License, Version 2.0](LICENSE).
+본 프로젝트는 [Apache License, Version 2.0](LICENSE) 라이선스를 따릅니다.
