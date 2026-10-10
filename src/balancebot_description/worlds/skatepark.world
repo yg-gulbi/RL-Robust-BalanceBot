@@ -1,0 +1,256 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <world name="skatepark">
+    <!-- ================= Physics Settings ================= -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- ================= Gazebo Harmonic Plugins ================= -->
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu" />
+
+    <!-- ================= Gravity & Sun ================= -->
+    <gravity>0 0 -9.81</gravity>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 20 0 0 0</pose>
+      <diffuse>0.85 0.85 0.85 1</diffuse>
+      <specular>0.25 0.25 0.25 1</specular>
+      <direction>-0.4 0.2 -0.9</direction>
+    </light>
+
+    <!-- ================= Zone 1: Main Flat Ground ================= -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="ground_link">
+        <collision name="ground_collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.0</mu>
+                <mu2>1.0</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="ground_visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.75 0.75 0.77 1</ambient>
+            <diffuse>0.75 0.75 0.77 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= Zone 2: Gentle Undulating Bumps ================= -->
+    <!-- Bumps along x = 3.0 to 6.5 m (amplitude 2.5 - 3.5 cm) -->
+    <model name="gentle_bumps">
+      <static>true</static>
+      <pose>4.5 0 0 0 0 0</pose>
+      <link name="bumps_link">
+        <!-- Bump 1 -->
+        <collision name="bump_1_col">
+          <pose>-1.2 0 0.015 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="bump_1_vis">
+          <pose>-1.2 0 0.015 0 1.5707963 1.5707963</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.6 0.65 0.7 1</ambient>
+            <diffuse>0.6 0.65 0.7 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- Bump 2 -->
+        <collision name="bump_2_col">
+          <pose>-0.2 0 0.02 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="bump_2_vis">
+          <pose>-0.2 0 0.02 0 1.5707963 1.5707963</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.6 0.65 0.7 1</ambient>
+            <diffuse>0.6 0.65 0.7 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- Bump 3 -->
+        <collision name="bump_3_col">
+          <pose>0.8 0 0.015 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="bump_3_vis">
+          <pose>0.8 0 0.015 0 1.5707963 1.5707963</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>2.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.6 0.65 0.7 1</ambient>
+            <diffuse>0.6 0.65 0.7 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= Zone 3: Rough Uneven Blocks ================= -->
+    <!-- Non-uniform stepping blocks testing asymmetrical wheel disturbance -->
+    <model name="rough_terrain">
+      <static>true</static>
+      <pose>8.5 0 0 0 0 0</pose>
+      <link name="rough_link">
+        <collision name="block_1_col">
+          <pose>-0.8 0.3 0.02 0 0 0</pose>
+          <geometry><box><size>0.4 0.4 0.04</size></box></geometry>
+        </collision>
+        <visual name="block_1_vis">
+          <pose>-0.8 0.3 0.02 0 0 0</pose>
+          <geometry><box><size>0.4 0.4 0.04</size></box></geometry>
+          <material><ambient>0.55 0.5 0.45 1</ambient><diffuse>0.55 0.5 0.45 1</diffuse></material>
+        </visual>
+
+        <collision name="block_2_col">
+          <pose>-0.6 -0.3 0.03 0 0 0</pose>
+          <geometry><box><size>0.5 0.4 0.06</size></box></geometry>
+        </collision>
+        <visual name="block_2_vis">
+          <pose>-0.6 -0.3 0.03 0 0 0</pose>
+          <geometry><box><size>0.5 0.4 0.06</size></box></geometry>
+          <material><ambient>0.55 0.5 0.45 1</ambient><diffuse>0.55 0.5 0.45 1</diffuse></material>
+        </visual>
+
+        <collision name="block_3_col">
+          <pose>0.1 0.25 0.025 0 0 0</pose>
+          <geometry><box><size>0.6 0.4 0.05</size></box></geometry>
+        </collision>
+        <visual name="block_3_vis">
+          <pose>0.1 0.25 0.025 0 0 0</pose>
+          <geometry><box><size>0.6 0.4 0.05</size></box></geometry>
+          <material><ambient>0.55 0.5 0.45 1</ambient><diffuse>0.55 0.5 0.45 1</diffuse></material>
+        </visual>
+
+        <collision name="block_4_col">
+          <pose>0.4 -0.2 0.035 0 0 0</pose>
+          <geometry><box><size>0.45 0.45 0.07</size></box></geometry>
+        </collision>
+        <visual name="block_4_vis">
+          <pose>0.4 -0.2 0.035 0 0 0</pose>
+          <geometry><box><size>0.45 0.45 0.07</size></box></geometry>
+          <material><ambient>0.55 0.5 0.45 1</ambient><diffuse>0.55 0.5 0.45 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= Zone 4: Slope Incline ================= -->
+    <!-- 12-degree incline slope (3.5 m long) -->
+    <model name="slope_incline">
+      <static>true</static>
+      <pose>13.0 -3.0 0 0 0 0</pose>
+      <link name="slope_link">
+        <!-- Incline plane (angle 0.2094 rad ~ 12 deg, length 3.5 m) -->
+        <collision name="slope_col">
+          <pose>0 0 0.36 0 0.2094 0</pose>
+          <geometry><box><size>3.5 2.0 0.05</size></box></geometry>
+        </collision>
+        <visual name="slope_vis">
+          <pose>0 0 0.36 0 0.2094 0</pose>
+          <geometry><box><size>3.5 2.0 0.05</size></box></geometry>
+          <material><ambient>0.65 0.6 0.55 1</ambient><diffuse>0.65 0.6 0.55 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= Zone 5: Jump Ramp (20 deg, 0.35m height) ================= -->
+    <!-- Lip height 0.35 m, incline angle 20 deg (0.349 rad), ramp length = 0.35 / sin(20 deg) = 1.023 m -->
+    <model name="jump_ramp">
+      <static>true</static>
+      <pose>14.0 0 0 0 0 0</pose>
+      <link name="ramp_link">
+        <!-- Ramp board tilted at 20 deg (0.3491 rad) -->
+        <!-- Center of ramp board is at x = -0.48, z = 0.175 -->
+        <collision name="ramp_col">
+          <pose>-0.48 0 0.175 0 -0.3491 0</pose>
+          <geometry><box><size>1.05 1.8 0.04</size></box></geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.2</mu>
+                <mu2>1.2</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="ramp_vis">
+          <pose>-0.48 0 0.175 0 -0.3491 0</pose>
+          <geometry><box><size>1.05 1.8 0.04</size></box></geometry>
+          <material>
+            <ambient>0.85 0.35 0.15 1</ambient>
+            <diffuse>0.85 0.35 0.15 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- Vertical lip backing support at x = 0.0 -->
+        <collision name="lip_support_col">
+          <pose>0.0 0 0.17 0 0 0</pose>
+          <geometry><box><size>0.05 1.8 0.34</size></box></geometry>
+        </collision>
+        <visual name="lip_support_vis">
+          <pose>0.0 0 0.17 0 0 0</pose>
+          <geometry><box><size>0.05 1.8 0.34</size></box></geometry>
+          <material><ambient>0.3 0.3 0.3 1</ambient><diffuse>0.3 0.3 0.3 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

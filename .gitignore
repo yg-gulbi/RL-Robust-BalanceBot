@@ -1,0 +1,14 @@
+# Build and Test Artifacts
+build/
+install/
+log/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Temporary & Evaluation Logs
+eval_output_audit/
+.DS_Store
+Thumbs.db

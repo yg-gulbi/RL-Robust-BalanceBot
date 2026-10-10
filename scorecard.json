@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-10-09T15:40:36Z",
+  "duration_seconds": 19.372,
+  "overall_status": "PASSED",
+  "exit_code": 0,
+  "tier_targeted": "all",
+  "tiers": {
+    "tier1_feature_coverage": {
+      "file": "test_tier1_feature_coverage.py",
+      "expected_count": 120
+    },
+    "tier2_boundary_corner": {
+      "file": "test_tier2_boundary_corner.py",
+      "expected_count": 120
+    },
+    "tier3_cross_feature": {
+      "file": "test_tier3_cross_feature.py",
+      "expected_count": 24
+    },
+    "tier4_real_world_scenarios": {
+      "file": "test_tier4_real_world_scenarios.py",
+      "expected_count": 12
+    }
+  },
+  "quantitative_criteria": {
+    "steady_state_pitch": "|theta| < 5.0 deg (0.087 rad)",
+    "integrated_velocity_error": "J_v <= 1.5 m/s*s (5s run)",
+    "integrated_pitch_error": "J_theta <= 0.15 rad*s (5s run)",
+    "settling_time": "T_s < 2.0 s (5% band)",
+    "touchdown_clearance": "z > 0 (no chassis strike)",
+    "landing_recovery": "recovery <= 2.5 s"
+  }
+}

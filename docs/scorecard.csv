@@ -1,0 +1,7 @@
+Metric,Measured Value,Threshold,Status
+Steady-State Pitch Balance,0.126 deg,< 5.0 deg,PASS
+Integrated Velocity Error (J_v),0.4550 m/s*s,<= 1.5 m/s*s,PASS
+Integrated Pitch Error (J_theta),0.0819 rad*s,<= 0.15 rad*s,PASS
+Settling Time (T_s),0.962 s,< 2.0 s,PASS
+Chassis Ground Clearance (z_min),0.1567 m,> 0.0 m,PASS
+Landing Recovery Time (T_recover),0.000 s,<= 2.5 s,PASS

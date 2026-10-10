@@ -1,0 +1,142 @@
+<mujoco model="balancebot_skatepark">
+  <compiler angle="radian" coordinate="local" />
+
+  <option timestep="0.001" gravity="0 0 -9.81" integrator="Euler" />
+
+  <visual>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.8 0.8 0.8" specular="0.1 0.1 0.1" />
+    <rgba haze="0.15 0.25 0.35 1" />
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512" />
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0.2 0.25 0.3" rgb2="0.3 0.35 0.4" />
+    <material name="grid_mat" texture="grid" texrepeat="20 20" reflectance="0.2" />
+    <material name="torso_mat" rgba="0.22 0.22 0.25 1.0" specular="0.3" />
+    <material name="leg_mat" rgba="0.75 0.75 0.78 1.0" specular="0.5" />
+    <material name="wheel_mat" rgba="0.12 0.12 0.12 1.0" roughness="0.8" />
+    <material name="sensor_mat" rgba="0.10 0.45 0.85 1.0" />
+    <material name="bump_mat" rgba="0.60 0.65 0.70 1.0" />
+    <material name="rough_mat" rgba="0.55 0.50 0.45 1.0" />
+    <material name="ramp_mat" rgba="0.85 0.35 0.15 1.0" />
+  </asset>
+
+  <worldbody>
+    <light directional="true" pos="0 0 20" dir="-0.4 0.2 -0.9" diffuse="0.8 0.8 0.8" specular="0.2 0.2 0.2" />
+
+    <!-- ================= Zone 1: Flat Ground Plane ================= -->
+    <geom name="floor" type="plane" size="50 50 0.1" material="grid_mat" friction="1.0 0.005 0.0001" />
+
+    <!-- ================= Zone 2: Gentle Sinusoidal Bumps ================= -->
+    <!-- Cylinders embedded in ground along x = 3.3 to 5.3 m -->
+    <geom name="bump1" type="cylinder" size="0.4 1.5" pos="3.3 0 0.015" quat="0.7071 0.7071 0 0" material="bump_mat" friction="1.0" />
+    <geom name="bump2" type="cylinder" size="0.5 1.5" pos="4.3 0 0.020" quat="0.7071 0.7071 0 0" material="bump_mat" friction="1.0" />
+    <geom name="bump3" type="cylinder" size="0.4 1.5" pos="5.3 0 0.015" quat="0.7071 0.7071 0 0" material="bump_mat" friction="1.0" />
+
+    <!-- ================= Zone 3: Rough Uneven Blocks ================= -->
+    <geom name="rough1" type="box" size="0.20 0.20 0.02" pos="7.7 0.30 0.02" material="rough_mat" friction="1.0" />
+    <geom name="rough2" type="box" size="0.25 0.20 0.03" pos="7.9 -0.30 0.03" material="rough_mat" friction="1.0" />
+    <geom name="rough3" type="box" size="0.30 0.20 0.025" pos="8.6 0.25 0.025" material="rough_mat" friction="1.0" />
+    <geom name="rough4" type="box" size="0.22 0.22 0.035" pos="8.9 -0.20 0.035" material="rough_mat" friction="1.0" />
+
+    <!-- ================= Zone 4: Incline Slope (12 degrees) ================= -->
+    <!-- length 3.5m, width 2.0m, pos=(13, -3, 0.36), rotated around Y by 0.2094 rad -->
+    <geom name="slope" type="box" size="1.75 1.0 0.025" pos="13.0 -3.0 0.36" axisangle="0 1 0 0.2094" material="bump_mat" friction="1.0" />
+
+    <!-- ================= Zone 5: Jump Ramp (20 deg incline, 0.35m height) ================= -->
+    <!-- Ramp board tilted at 20 degrees (0.3491 rad). Lip top edge is at x = 14.0, z = 0.35m -->
+    <geom name="ramp_board" type="box" size="0.512 0.90 0.02" pos="13.52 0 0.175" axisangle="0 1 0 -0.3491" material="ramp_mat" friction="1.2 0.005 0.0001" />
+    <geom name="ramp_lip" type="box" size="0.025 0.90 0.17" pos="14.0 0 0.17" material="torso_mat" friction="1.0" />
+
+    <!-- ================= BalanceBot Robot Model ================= -->
+    <body name="base_link" pos="0 0 0.45">
+      <freejoint name="root" />
+      <inertial pos="0 0 0" mass="12.0" diaginertia="0.1025 0.1625 0.1850" />
+      <geom name="torso_geom" type="box" size="0.175 0.125 0.10" material="torso_mat" />
+
+      <!-- Sensor Sites -->
+      <site name="imu" pos="0 0 0" size="0.01" rgba="0.1 0.45 0.85 1" />
+      <site name="lidar" pos="0.10 0 0.1225" size="0.015" rgba="0.1 0.1 0.1 1" />
+      <site name="camera" pos="0.185 0 0.03" size="0.01" rgba="0.1 0.1 0.1 1" />
+
+      <!-- Visual sensor adornments -->
+      <geom name="lidar_vis" type="cylinder" size="0.04 0.0225" pos="0.10 0 0.1225" material="sensor_mat" mass="0.20" />
+      <geom name="camera_vis" type="box" size="0.0125 0.045 0.0125" pos="0.185 0 0.03" material="sensor_mat" mass="0.10" />
+
+      <!-- Native Front Camera for Vision Rendering -->
+      <camera name="robot_front_camera" pos="0.185 0 0.03" xyaxes="0 -1 0 0 0 1" />
+
+      <!-- ================= Left Leg ================= -->
+      <body name="left_thigh" pos="0.0 0.15 -0.05">
+        <joint name="left_hip_joint" type="hinge" axis="0 1 0" range="-1.20 1.20" damping="0.5" frictionloss="0.1" />
+        <inertial pos="0 0 -0.10" mass="0.8" diaginertia="0.0028 0.0028 0.00025" />
+        <geom name="left_thigh_geom" type="capsule" fromto="0 0 0 0 0 -0.20" size="0.025" material="leg_mat" />
+
+        <body name="left_shin" pos="0 0 -0.20">
+          <joint name="left_knee_joint" type="hinge" axis="0 1 0" range="0.0 2.30" damping="0.5" frictionloss="0.1" />
+          <inertial pos="0 0 -0.10" mass="0.8" diaginertia="0.0028 0.0028 0.00025" />
+          <geom name="left_shin_geom" type="capsule" fromto="0 0 0 0 0 -0.20" size="0.022" material="leg_mat" />
+
+          <body name="left_wheel" pos="0 0.04 -0.20">
+            <joint name="left_wheel_joint" type="hinge" axis="0 1 0" damping="0.05" frictionloss="0.02" />
+            <inertial pos="0 0 0" mass="1.5" diaginertia="0.00406 0.00750 0.00406" />
+            <geom name="left_wheel_geom" type="cylinder" size="0.10 0.025" quat="0.7071 0.7071 0 0" material="wheel_mat" friction="1.0 0.005 0.0001" />
+          </body>
+        </body>
+      </body>
+
+      <!-- ================= Right Leg ================= -->
+      <body name="right_thigh" pos="0.0 -0.15 -0.05">
+        <joint name="right_hip_joint" type="hinge" axis="0 1 0" range="-1.20 1.20" damping="0.5" frictionloss="0.1" />
+        <inertial pos="0 0 -0.10" mass="0.8" diaginertia="0.0028 0.0028 0.00025" />
+        <geom name="right_thigh_geom" type="capsule" fromto="0 0 0 0 0 -0.20" size="0.025" material="leg_mat" />
+
+        <body name="right_shin" pos="0 0 -0.20">
+          <joint name="right_knee_joint" type="hinge" axis="0 1 0" range="0.0 2.30" damping="0.5" frictionloss="0.1" />
+          <inertial pos="0 0 -0.10" mass="0.8" diaginertia="0.0028 0.0028 0.00025" />
+          <geom name="right_shin_geom" type="capsule" fromto="0 0 0 0 0 -0.20" size="0.022" material="leg_mat" />
+
+          <body name="right_wheel" pos="0 -0.04 -0.20">
+            <joint name="right_wheel_joint" type="hinge" axis="0 1 0" damping="0.05" frictionloss="0.02" />
+            <inertial pos="0 0 0" mass="1.5" diaginertia="0.00406 0.00750 0.00406" />
+            <geom name="right_wheel_geom" type="cylinder" size="0.10 0.025" quat="0.7071 0.7071 0 0" material="wheel_mat" friction="1.0 0.005 0.0001" />
+          </body>
+        </body>
+      </body>
+
+    </body>
+  </worldbody>
+
+  <contact>
+    <exclude body1="base_link" body2="left_thigh" />
+    <exclude body1="base_link" body2="right_thigh" />
+    <exclude body1="left_thigh" body2="left_shin" />
+    <exclude body1="right_thigh" body2="right_shin" />
+    <exclude body1="left_shin" body2="left_wheel" />
+    <exclude body1="right_shin" body2="right_wheel" />
+  </contact>
+
+  <actuator>
+    <!-- Left & Right Hip Pitch Motors (Torque limit 50 N*m) -->
+    <motor name="left_hip_motor" joint="left_hip_joint" gear="1" ctrlrange="-50 50" ctrllimited="true" />
+    <motor name="right_hip_motor" joint="right_hip_joint" gear="1" ctrlrange="-50 50" ctrllimited="true" />
+
+    <!-- Left & Right Knee Pitch Motors (Torque limit 50 N*m) -->
+    <motor name="left_knee_motor" joint="left_knee_joint" gear="1" ctrlrange="-50 50" ctrllimited="true" />
+    <motor name="right_knee_motor" joint="right_knee_joint" gear="1" ctrlrange="-50 50" ctrllimited="true" />
+
+    <!-- Left & Right Wheel Motors (Torque limit 25 N*m) -->
+    <motor name="left_wheel_motor" joint="left_wheel_joint" gear="1" ctrlrange="-25 25" ctrllimited="true" />
+    <motor name="right_wheel_motor" joint="right_wheel_joint" gear="1" ctrlrange="-25 25" ctrllimited="true" />
+  </actuator>
+
+  <sensor>
+    <gyro name="imu_gyro" site="imu" />
+    <accelerometer name="imu_accel" site="imu" />
+    <framepos name="imu_pos" objtype="site" objname="imu" />
+    <framequat name="imu_quat" objtype="site" objname="imu" />
+    <framelinvel name="imu_linvel" objtype="site" objname="imu" />
+    <frameangvel name="imu_angvel" objtype="site" objname="imu" />
+    <rangefinder name="lidar_forward" site="lidar" />
+  </sensor>
+</mujoco>
